@@ -1,4 +1,5 @@
-import { storage, fetch } from '@forge/api';
+import { fetch } from '@forge/api';
+import { getAll, set } from '@forge/kvs';
 
 const PROXY_BASE = 'https://db-proxy.example.com/api/decision-brief';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -74,12 +75,11 @@ async function getFromProxy(decisionId) {
  */
 async function getFromStorage(decisionId) {
   try {
-    const cached = await storage.get(`decision:${decisionId}`);
-    if (!cached) {
+    const cached = await getAll(`decision:${decisionId}`);
+    if (!cached || !cached.timestamp) {
       return null;
     }
-    // Check cache TTL
-    if (cached.timestamp && Date.now() - cached.timestamp > CACHE_TTL_MS) {
+    if (Date.now() - cached.timestamp > CACHE_TTL_MS) {
       return null;
     }
     return cached.data;
