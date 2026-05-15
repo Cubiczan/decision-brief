@@ -10,7 +10,7 @@ permissions:
   external:
     fetch:
       backend:
-        - address: https://db-proxy.example.com
+        - "https://db-proxy.example.com"
 
 modules:
   jira:projectPage:
