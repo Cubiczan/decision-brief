@@ -1,0 +1,11 @@
+{
+  "name": "decision-brief",
+  "version": "2.0.0",
+  "description": "Confluence macro for CFO-grade decision briefs, investment memos, and audit trails — powered by CockroachDB",
+  "private": true,
+  "scripts": { "build": "forge build" },
+  "dependencies": {
+    "@forge/api": "^7.2.0",
+    "@forge/ui": "^1.11.4"
+  }
+}

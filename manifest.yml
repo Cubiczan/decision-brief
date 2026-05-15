@@ -1,0 +1,44 @@
+app:
+  id: ari:cloud:ecosystem::app/decision-brief
+  runtime:
+    name: nodejs24.x
+
+permissions:
+  scopes:
+    - read:confluence-content:summary
+    - read:confluence-content
+    - storage:app
+    - write:confluence-content
+
+modules:
+  confluence:macro:
+    - key: decision-brief-macro
+      resource: main
+      resolver:
+        function: resolver
+      title: Decision Brief
+      description: Embed CFO-grade decision briefs with adversarial rounds, audit trails, and risk signals — powered by CockroachDB
+      icon: https://developer.atlassian.com/platform/forge/images/icons/decision-icon.svg
+      parameters:
+        - name: decisionId
+          title: Decision ID
+          type: string
+          required: true
+          defaultValue: DC-CFO-001
+
+  webtrigger:
+    - key: decision-brief-webtrigger
+      resource: webhook
+      function: webhook-handler
+
+resources:
+  - key: main
+    path: src/frontend/index.jsx
+  - key: webhook
+    path: src/webhook.js
+
+function:
+  - key: resolver
+    handler: index.handler
+  - key: webhook-handler
+    handler: webhook.handler
