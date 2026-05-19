@@ -274,4 +274,6 @@ Private repository. All rights reserved.
 
 ## Demo
 
+[![Demo Video](https://img.shields.io/badge/Watch_Demo-3min-blue)](docs/media/decision-brief-demo.mp4)
+
 📺 [Watch the demo](demos/$(basename "$video")) — slide-style walkthrough of key features and usage.
