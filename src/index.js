@@ -1,8 +1,10 @@
 import { fetch } from '@forge/api';
 import { getAll, set } from '@forge/kvs';
+import { safeFetch } from './lib/resilience/safeFetch.js';
 
 const PROXY_BASE = 'https://db-proxy.example.com/api/decision-brief';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const PROXY_TIMEOUT_MS = 8000; // fail fast into the KVS/mock fallback if the proxy hangs
 
 const MOCK_CASES = {
   'DC-CFO-001': {
@@ -60,7 +62,15 @@ const MOCK_CASES = {
  */
 async function getFromProxy(decisionId) {
   try {
-    const response = await fetch(`${PROXY_BASE}/${encodeURIComponent(decisionId)}`);
+    // safeFetch adds an 8s per-attempt AbortController timeout + bounded
+    // backoff so a hung/slow proxy fails fast into the KVS/mock fallback
+    // instead of blocking the resolver. Forge has no global fetch, so we
+    // pass @forge/api's fetch as the implementation.
+    const response = await safeFetch(`${PROXY_BASE}/${encodeURIComponent(decisionId)}`, {
+      fetchImpl: fetch,
+      timeoutMs: PROXY_TIMEOUT_MS,
+      maxAttempts: 2,
+    });
     if (!response.ok) {
       return null;
     }
