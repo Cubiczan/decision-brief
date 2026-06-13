@@ -1,31 +1,30 @@
 import { set } from '@forge/kvs';
+import crypto from '@forge/crypto';
+import { createWebhookHandler } from '../forge-core/index.js';
 
-export async function handler(request) {
-  if (request.method !== 'POST') {
-    return { status: 405, body: { error: 'Method not allowed' } };
-  }
+// Alternate webtrigger entrypoint. This handler previously accepted writes with
+// NO signature verification at all. It is now built from forge-core's
+// createWebhookHandler, which is fail-closed by construction: a missing/blank
+// WEBHOOK_SECRET => 503, a missing or invalid X-Webhook-Signature => 401. The
+// unauthenticated-write bug can no longer be reintroduced here.
+export const handler = createWebhookHandler({
+  computeExpected: ({ secret, rawBody }) =>
+    crypto.sha256().update(secret + rawBody).digest().then((h) => h.toHex()),
 
-  try {
-    const body = await request.json();
+  validate: (body) =>
+    body.decisionId
+      ? { ok: true }
+      : { ok: false, status: 400, reason: 'Missing required field: decisionId' },
+
+  store: async (body) => {
     const { decisionId, ...caseData } = body;
-
-    if (!decisionId) {
-      return { status: 400, body: { error: 'Missing required field: decisionId' } };
-    }
-
     await set(`decision:${decisionId}`, {
       data: {
         lastUpdated: new Date().toISOString(),
-        ...caseData
+        ...caseData,
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-
-    return {
-      status: 200,
-      body: { success: true, message: `Decision brief ${decisionId} updated` }
-    };
-  } catch (e) {
-    return { status: 400, body: { error: 'Invalid JSON body' } };
-  }
-}
+    return { message: `Decision brief ${decisionId} updated` };
+  },
+});

@@ -1,6 +1,7 @@
 import { fetch } from '@forge/api';
-import { getAll, set } from '@forge/kvs';
+import { getAll } from '@forge/kvs';
 import { safeFetch } from './lib/resilience/safeFetch.js';
+import { createResolver, readCache, pick } from './forge-core/index.js';
 
 const PROXY_BASE = 'https://db-proxy.example.com/api/decision-brief';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -59,63 +60,38 @@ const MOCK_CASES = {
 
 /**
  * Fetch decision brief data from CockroachDB REST proxy.
+ *
+ * safeFetch adds an 8s per-attempt AbortController timeout + bounded backoff so
+ * a hung/slow proxy fails fast into the KVS/mock fallback instead of blocking
+ * the resolver. Forge has no global fetch, so we pass @forge/api's fetch as the
+ * implementation. (forge-core's createResolver catches throws as a fall-through.)
  */
 async function getFromProxy(decisionId) {
-  try {
-    // safeFetch adds an 8s per-attempt AbortController timeout + bounded
-    // backoff so a hung/slow proxy fails fast into the KVS/mock fallback
-    // instead of blocking the resolver. Forge has no global fetch, so we
-    // pass @forge/api's fetch as the implementation.
-    const response = await safeFetch(`${PROXY_BASE}/${encodeURIComponent(decisionId)}`, {
-      fetchImpl: fetch,
-      timeoutMs: PROXY_TIMEOUT_MS,
-      maxAttempts: 2,
-    });
-    if (!response.ok) {
-      return null;
-    }
-    return await response.json();
-  } catch {
+  const response = await safeFetch(`${PROXY_BASE}/${encodeURIComponent(decisionId)}`, {
+    fetchImpl: fetch,
+    timeoutMs: PROXY_TIMEOUT_MS,
+    maxAttempts: 2,
+  });
+  if (!response.ok) {
     return null;
   }
+  return await response.json();
 }
 
 /**
- * Retrieve cached decision brief from Forge storage with TTL-based expiry.
+ * Main macro resolver — tries proxy → storage (TTL) → mock fallback.
  */
-async function getFromStorage(decisionId) {
-  try {
-    const cached = await getAll(`decision:${decisionId}`);
-    if (!cached || !cached.timestamp) {
-      return null;
-    }
-    if (Date.now() - cached.timestamp > CACHE_TTL_MS) {
-      return null;
-    }
-    return cached.data;
-  } catch {
-    return null;
-  }
-}
+const resolve = createResolver({
+  fromProxy: ({ decisionId }) => getFromProxy(decisionId),
+  fromCache: ({ decisionId }) =>
+    readCache({
+      read: () => getAll(`decision:${decisionId}`),
+      ttlMs: CACHE_TTL_MS,
+    }),
+  mock: ({ decisionId }) => MOCK_CASES[decisionId] || MOCK_CASES['DC-CFO-001'],
+});
 
-/**
- * Main macro resolver — tries proxy → storage → mock fallback.
- */
 export async function handler(request) {
-  const decisionId = request.extension?.decisionId || 'DC-CFO-001';
-
-  // 1. Try CockroachDB REST proxy
-  let caseData = await getFromProxy(decisionId);
-
-  // 2. Fall back to Forge storage cache
-  if (!caseData) {
-    caseData = await getFromStorage(decisionId);
-  }
-
-  // 3. Fall back to mock data
-  if (!caseData) {
-    caseData = MOCK_CASES[decisionId] || MOCK_CASES['DC-CFO-001'];
-  }
-
-  return caseData;
+  const decisionId = pick(request, ['extension', 'decisionId'], 'DC-CFO-001');
+  return resolve({ decisionId });
 }
