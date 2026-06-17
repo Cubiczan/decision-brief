@@ -1,1 +1,13 @@
 node_modules/
+dist/
+build/
+.venv/
+venv/
+__pycache__/
+*.pyc
+target/
+.env
+.env.local
+.DS_Store
+*.log
+coverage/
