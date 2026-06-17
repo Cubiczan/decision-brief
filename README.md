@@ -39,7 +39,7 @@ Built on Atlassian Forge with CockroachDB as the data backbone, Decision Brief o
 │                    Jira Project — Decision Briefs               │
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │              Decision Brief Panel                          │  │
-│  │           (Custom UI — @forge/ui)                         │  │
+│  │              (UI Kit — @forge/ui)                         │  │
 │  │  ┌────────────────────────────────────────────────────┐   │  │
 │  │  │  Header: Title + Status Badges + Agent IDs         │   │  │
 │  │  ├────────────────────────────────────────────────────┤   │  │
@@ -236,10 +236,13 @@ decision-brief/
 │   ├── index.js               # Backend resolver — three-tier data fetch + cache
 │   ├── webhook.js             # Webtrigger handler — POST data ingestion
 │   ├── frontend/
-│   │   ├── index.html         # Custom UI HTML shell
-│   │   └── index.jsx          # Custom UI React component (tabs, tables, badges)
-│   └── webhook-fn/
-│       └── index.js           # Webtrigger function entry point
+│   │   ├── index.html         # UI shell
+│   │   └── index.jsx          # UI Kit component (tabs, tables, badges)
+│   ├── webhook-fn/
+│   │   └── index.js           # Alternate webtrigger entry point
+│   ├── forge-core/            # Vendored shared plumbing (resolver, webhook, fetch, response)
+│   └── lib/
+│       └── resilience/        # safeFetch (timeout + backoff + SSRF allowlist), retry, errors
 └── docs/
     └── decision-brief-screenshot.png
 ```
@@ -249,7 +252,7 @@ decision-brief/
 ## Technical Details
 
 - **Runtime**: Node.js 24.x (Forge-managed)
-- **UI Framework**: `@forge/ui` Custom UI with `Tabs`, `Table`, `StatusLozenge`, and `Badge` components
+- **UI Framework**: `@forge/ui` UI Kit with `Tabs`, `Table`, `StatusLozenge`, and `Badge` components
 - **Storage**: `@forge/kvs` (Forge Key-Value Store) — per-decision caching with 5-minute TTL
 - **HTTP Client**: `@forge/api` `fetch` (Forge's secure, permission-gated HTTP client)
 - **Module Type**: `jira:projectPage`
@@ -276,4 +279,4 @@ Private repository. All rights reserved.
 
 [![Demo Video](https://img.shields.io/badge/Watch_Demo-3min-blue)](docs/media/decision-brief-demo.mp4)
 
-📺 [Watch the demo](demos/$(basename "$video")) — slide-style walkthrough of key features and usage.
+[Watch the demo](docs/media/decision-brief-demo.mp4) — slide-style walkthrough of key features and usage.

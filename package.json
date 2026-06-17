@@ -1,7 +1,7 @@
 {
   "name": "decision-brief",
   "version": "2.0.0",
-  "description": "Confluence macro for CFO-grade decision briefs, investment memos, and audit trails — powered by CockroachDB",
+  "description": "Jira Project Page app for CFO-grade decision briefs, adversarial rounds, and audit trails — powered by CockroachDB",
   "private": true,
   "scripts": {
     "build": "forge build"
