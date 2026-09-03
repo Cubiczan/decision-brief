@@ -28,7 +28,7 @@ Built on Atlassian Forge with CockroachDB as the data backbone, Decision Brief o
 | **Linked CFO Briefs** | Related financial briefs and investment memos are surfaced in a dedicated tab, connecting the decision to its supporting financial analysis |
 | **High-Stakes Flagging** | Decisions above a risk threshold are automatically flagged with a red "HIGH STAKES" badge for visibility |
 | **Three-Tier Data Fallback** | CockroachDB REST Proxy → Forge KVS Cache (5-min TTL) → Rich Mock Data — zero-downtime guarantee |
-| **Webtrigger Ingestion** | POST webhook endpoint for pushing decision updates from AI decision-making pipelines or case management systems |
+| **Webtrigger Ingestion** | POST webhook endpoint for pushing decision updates from AI decision-making pipelines, UiPath handoffs, or case management systems |
 
 ---
 
