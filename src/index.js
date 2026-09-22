@@ -2,6 +2,7 @@ import { fetch } from '@forge/api';
 import { getAll } from '@forge/kvs';
 import { safeFetch } from './lib/resilience/safeFetch.js';
 import { createResolver, readCache, pick } from './forge-core/index.js';
+import { normalizeDecisionPacket } from './lib/governedOutput.js';
 
 const PROXY_BASE = 'https://db-proxy.example.com/api/decision-brief';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -93,5 +94,5 @@ const resolve = createResolver({
 
 export async function handler(request) {
   const decisionId = pick(request, ['extension', 'decisionId'], 'DC-CFO-001');
-  return resolve({ decisionId });
+  return normalizeDecisionPacket(await resolve({ decisionId }));
 }

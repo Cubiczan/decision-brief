@@ -62,6 +62,35 @@ function AuditTable({ audit }) {
   );
 }
 
+function ValuePoolTable({ packet }) {
+  return (
+    <Fragment>
+      <SectionMessage title="Governed Value Pools" appearance="info">
+        <Text>{packet.decisionStatement}</Text>
+        <Text appearance="subtle">Recommendation: {packet.recommendation} · Owner: {packet.decisionOwner}</Text>
+      </SectionMessage>
+      <Table>
+        <Head>
+          <Cell><Text size="small"><Strong>Pool</Strong></Text></Cell>
+          <Cell><Text size="small"><Strong>Domain</Strong></Text></Cell>
+          <Cell><Text size="small"><Strong>Value</Strong></Text></Cell>
+          <Cell><Text size="small"><Strong>Confidence</Strong></Text></Cell>
+          <Cell><Text size="small"><Strong>Evidence</Strong></Text></Cell>
+        </Head>
+        {packet.valuePools.map((pool) => (
+          <Row key={pool.poolId}>
+            <Cell><Text>{pool.name}</Text></Cell>
+            <Cell><Text>{pool.domain}</Text></Cell>
+            <Cell><Text>{pool.valueCurrency} {pool.valueAmount.toLocaleString()}</Text></Cell>
+            <Cell><Text>{Math.round(pool.confidence * 100)}%</Text></Cell>
+            <Cell><Text>{pool.evidence.length} source(s)</Text></Cell>
+          </Row>
+        ))}
+      </Table>
+    </Fragment>
+  );
+}
+
 export const handler = async (data) => {
   const statusColor = data.status === 'LOCKED' ? 'success' : 'inprogress';
   const scoreColor = data.foundationScore >= 70 ? 'green' : data.foundationScore >= 50 ? 'yellow' : 'red';
@@ -108,6 +137,11 @@ export const handler = async (data) => {
             <Text key={i}>• <Strong>{b.title}</Strong> — {b.company} <Badge text={b.type} /></Text>
           )) : <Text appearance="subtle">No briefs linked</Text>}
         </Tab>
+        {data.governedValuePoolPacket && (
+          <Tab label="Value Pools">
+            <ValuePoolTable packet={data.governedValuePoolPacket} />
+          </Tab>
+        )}
       </Tabs>
     </Fragment>
   );
